@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox alignment="center" minHeight="350" minWidth="400" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="RegistrationController">
+    <Text text="Регистрация">
+        <VBox.margin>
+            <Insets bottom="10.0" top="10.0" />
+        </VBox.margin>
+        <font>
+            <Font size="24.0" />
+        </font>
+    </Text>
+    <Label minWidth="300.0" text="Имя" />
+    <TextField fx:id="name" maxWidth="300" nodeOrientation="LEFT_TO_RIGHT" promptText="Имя">
+        <VBox.margin>
+            <Insets bottom="10.0" />
+        </VBox.margin>
+    </TextField>
+    <Label minWidth="300.0" text="Адрес электронной почты" />
+    <TextField fx:id="email" maxWidth="300" nodeOrientation="LEFT_TO_RIGHT" promptText="mail@example.com">
+        <VBox.margin>
+            <Insets bottom="10.0" />
+        </VBox.margin>
+    </TextField>
+    <Label minWidth="300.0" text="Логин" />
+    <TextField fx:id="login" maxWidth="300" nodeOrientation="LEFT_TO_RIGHT" promptText="Логин">
+        <VBox.margin>
+            <Insets bottom="10.0" />
+        </VBox.margin>
+    </TextField>
+    <Label minWidth="300.0" text="Пароль" />
+    <PasswordField fx:id="pass" maxWidth="300" promptText="Пароль">
+        <VBox.margin>
+            <Insets bottom="10.0" />
+        </VBox.margin>
+    </PasswordField>
+    <Label minWidth="300.0" text="Повторите пароль" />
+    <PasswordField fx:id="pass2" maxWidth="300" promptText="Пароль еще раз">
+        <VBox.margin>
+            <Insets bottom="5.0" />
+        </VBox.margin>
+    </PasswordField>
+    <Label fx:id="incorrectData" textFill="RED" visible="false" />
+    <Button maxWidth="300" minHeight="40.0" onAction="#onBtnReg" text="Зарегистрироваться">
+        <VBox.margin>
+            <Insets bottom="20.0" top="20.0" />
+        </VBox.margin>
+        <effect>
+            <SepiaTone level="0.32" />
+        </effect>
+    </Button>
+</VBox>

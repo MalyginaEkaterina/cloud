@@ -7,6 +7,8 @@ public class ProtocolDict {
     public static final short AUTHORIZATION_STATUS = 4;
     public static final short LOAD = 5;
     public static final short LOAD_STATUS = 6;
-    public static final short LOAD_STATUS_OK = 0;
-    public static final short LOAD_STATUS_ERROR = 1;
+    public static final short STATUS_OK = 0;
+    public static final short STATUS_ERROR = 1;
+    public static final short STATUS_LOGIN_USED = 2;
+    public static final short STATUS_LOGIN_FAIL = 3;
 }

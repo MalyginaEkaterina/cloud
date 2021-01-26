@@ -7,7 +7,7 @@ import javafx.stage.Stage;
 public class Main extends Application {
 
     @Override
-    public void start(Stage primaryStage) throws Exception{
+    public void start(Stage primaryStage) throws Exception {
         //загружаем окно авторизации
         FXMLLoader authLoader = new FXMLLoader(getClass().getResource("/auth.fxml"));
         Parent authRoot = authLoader.load();
@@ -25,6 +25,7 @@ public class Main extends Application {
         authController.setCloudClient(cloudClient);
         authController.setRegistrationRoot(registrationRoot);
         authController.setMainRoot(mainRoot);
+        authController.setMainController(mainController);
 
         Scene authScene = new Scene(authRoot, 400, 400);
 
@@ -33,6 +34,7 @@ public class Main extends Application {
         //отображаем окно авторизации
         primaryStage.setTitle("Auth");
         primaryStage.setScene(authScene);
+        primaryStage.setOnCloseRequest(e -> System.exit(0));
         primaryStage.show();
     }
 

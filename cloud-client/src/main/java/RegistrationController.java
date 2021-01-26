@@ -1,7 +1,11 @@
+import cloud.common.ProtocolDict;
+import cloud.common.User;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -40,11 +44,33 @@ public class RegistrationController {
             incorrectData.setText("Некорректно введен пароль");
             incorrectData.setVisible(true);
         } else {
-            cloudClient.register(name.getText(), email.getText(), login.getText(), pass.getText());
-            incorrectData.setVisible(false);
-            Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
-            stage.setTitle("Auth");
-            stage.setScene(authScene);
+            cloudClient.register(new User(name.getText(), email.getText(), login.getText(), pass.getText()), status -> {
+                if (status == ProtocolDict.STATUS_LOGIN_USED) {
+                    Platform.runLater(() -> {
+                        login.clear();
+                        incorrectData.setText("Данный логин уже используется. Попробуйте другой");
+                        incorrectData.setVisible(true);
+                    });
+                } else if (status == ProtocolDict.STATUS_ERROR) {
+                    Platform.runLater(() -> {
+                        login.clear();
+                        incorrectData.setText("Ошибка. Попробуйте позже");
+                        incorrectData.setVisible(true);
+                    });
+                } else if (status == ProtocolDict.STATUS_OK) {
+                    Platform.runLater(() -> {
+                        incorrectData.setVisible(false);
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("Auth status");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Регистрация прошла успешно");
+                        alert.showAndWait();
+                        Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
+                        stage.setTitle("Auth");
+                        stage.setScene(authScene);
+                    });
+                }
+            });
         }
     }
 }

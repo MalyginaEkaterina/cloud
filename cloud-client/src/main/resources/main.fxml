@@ -6,8 +6,8 @@
 <?import javafx.scene.text.*?>
 
 <VBox alignment="center" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="MainController">
-
-    <GridPane>
+    
+    <GridPane style="-fx-background-color: LightBlue;">
         <VBox GridPane.columnIndex="0">
             <ProgressBar fx:id="freeSize" progress="0.78">
             <padding>
@@ -32,14 +32,21 @@
       <padding>
          <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
       </padding>
+      <opaqueInsets>
+         <Insets />
+      </opaqueInsets>
     </GridPane>
+    <HBox>
+        <TextField fx:id="pathField" editable="false" HBox.hgrow="ALWAYS" />
+        <Button text="Вверх" onAction="#btnPathUpAction"/>
+    </HBox>
     <TableView fx:id="filesTable" VBox.vgrow="ALWAYS" />
 
     <HBox spacing="5">
         <Button focusTraversable="false" maxWidth="Infinity" text="Создать папку" HBox.hgrow="ALWAYS" />
         <Button focusTraversable="false" maxWidth="Infinity" text="Загрузить файл" HBox.hgrow="ALWAYS" />
         <Button focusTraversable="false" maxWidth="Infinity" text="Скачать файл" HBox.hgrow="ALWAYS" />
-        <Button focusTraversable="false" maxWidth="Infinity" text="Удалить файл" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Удалить" HBox.hgrow="ALWAYS" />
         <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
         </padding>

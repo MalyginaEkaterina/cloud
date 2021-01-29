@@ -22,6 +22,7 @@ public class Main extends Application {
         MainController mainController = mainLoader.getController();
 
         CloudClient cloudClient = new CloudClient();
+        mainController.setCloudClient(cloudClient);
         authController.setCloudClient(cloudClient);
         authController.setRegistrationRoot(registrationRoot);
         authController.setMainRoot(mainRoot);

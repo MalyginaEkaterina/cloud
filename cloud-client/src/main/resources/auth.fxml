@@ -2,7 +2,6 @@
 
 <?import javafx.geometry.*?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.effect.*?>
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
@@ -26,10 +25,7 @@
     <Button maxWidth="300" minHeight="40.0" onAction="#enterBtnAction" text="Войти">
       <VBox.margin>
          <Insets bottom="5.0" />
-      </VBox.margin>
-      <effect>
-         <SepiaTone level="0.32" />
-      </effect></Button>
+      </VBox.margin></Button>
     <Label fx:id="authFail" text="Неверный логин/пароль" textFill="RED" visible="false" />
     <Button fx:id="regButton" onAction="#regBtnAction" text="Зарегистрироваться">
       <VBox.margin>

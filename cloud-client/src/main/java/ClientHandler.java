@@ -1,3 +1,4 @@
+import cloud.common.FileDir;
 import cloud.common.Protocol;
 import cloud.common.ProtocolDict;
 import cloud.common.User;
@@ -5,6 +6,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
@@ -39,12 +41,35 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 } else {
                     // TODO: log
                 }
+            } else if (msgType == ProtocolDict.GET_DIR_STRUCTURE_STATUS) {
+                short status = m.readShort();
+                TreeDirectory treeDirectory = null;
+                if (status == ProtocolDict.STATUS_OK) {
+                    treeDirectory = getTreeDirectoryFromBuf(m);
+                }
+                if (callbacks.getOnDirStructureCallback() != null) {
+                    callbacks.getOnDirStructureCallback().accept(status, treeDirectory);
+                } else {
+                    // TODO: log
+                }
             } else {
                 // TODO: log
             }
         } finally {
             m.release();
         }
+    }
+
+    public TreeDirectory getTreeDirectoryFromBuf(ByteBuf m) {
+        TreeDirectory treeDirectory = new TreeDirectory();
+        ArrayList<FileDir> arrFiles = new ArrayList<>();
+        while (m.isReadable()) {
+            arrFiles.add(Protocol.readFileDir(m));
+        }
+        for (FileDir f : arrFiles) {
+            treeDirectory.insert(f);
+        }
+        return treeDirectory;
     }
 
     @Override

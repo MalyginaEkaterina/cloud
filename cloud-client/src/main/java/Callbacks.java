@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 class Callbacks {
     private Consumer<Short> onRegStatusCallback;
     private BiConsumer<Short, User> onAuthStatusCallback;
+    private BiConsumer<Short, TreeDirectory> onDirStructureCallback;
 
     Consumer<Short> getOnRegStatusCallback() {
         return onRegStatusCallback;
@@ -21,5 +22,13 @@ class Callbacks {
 
     void setOnAuthStatusCallback(BiConsumer<Short, User> onAuthStatusCallback) {
         this.onAuthStatusCallback = onAuthStatusCallback;
+    }
+
+    public BiConsumer<Short, TreeDirectory> getOnDirStructureCallback() {
+        return onDirStructureCallback;
+    }
+
+    public void setOnDirStructureCallback(BiConsumer<Short, TreeDirectory> onDirStructureCallback) {
+        this.onDirStructureCallback = onDirStructureCallback;
     }
 }

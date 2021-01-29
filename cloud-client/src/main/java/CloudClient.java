@@ -75,6 +75,13 @@ public class CloudClient {
         writeMsg(msg);
     }
 
+    public void getDirectoryStructure(BiConsumer<Short, TreeDirectory> callback) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.GET_DIR_STRUCTURE);
+        callbacks.setOnDirStructureCallback(callback);
+        writeMsg(msg);
+    }
+
     public void writeMsg(ByteBuf msg) {
         //добавляем длину всего сообщения перед сообщением(4 байта)
         ByteBuf msgLength = Unpooled.buffer(Integer.BYTES);

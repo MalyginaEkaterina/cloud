@@ -1,5 +1,6 @@
 package cloud.server;
 
+import cloud.common.FileDir;
 import cloud.common.Protocol;
 import cloud.common.ProtocolDict;
 import cloud.common.User;
@@ -8,6 +9,8 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+
+import java.util.ArrayList;
 
 public class CloudServerHandler extends ChannelInboundHandlerAdapter {
     private Boolean isAuthorized;
@@ -27,6 +30,8 @@ public class CloudServerHandler extends ChannelInboundHandlerAdapter {
                 registration(ctx, m);
             } else if (msgType == ProtocolDict.AUTHORIZATION) {
                 authorization(ctx, m);
+            } else if (msgType == ProtocolDict.GET_DIR_STRUCTURE) {
+                getDirStructure(ctx, m);
             }
         } finally {
             m.release();
@@ -37,6 +42,23 @@ public class CloudServerHandler extends ChannelInboundHandlerAdapter {
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
         ctx.close();
+    }
+
+    private void getDirStructure(ChannelHandlerContext ctx, ByteBuf msg) {
+        if (!isAuthorized) {
+            sendGetStructureError(ctx);
+            return;
+        }
+        SqlClient sql = new SqlClient();
+        try {
+            //TODO Переписать с использованием пула коннектов к БД
+            sql.connect();
+            sendGetStructureStatusAndInfo(ctx, sql.getStructureByID(user.getId()));
+            sql.disconnect();
+        } catch (RuntimeException e) {
+            sendGetStructureError(ctx);
+        }
+
     }
 
     private void authorization(ChannelHandlerContext ctx, ByteBuf msg) {
@@ -55,7 +77,6 @@ public class CloudServerHandler extends ChannelInboundHandlerAdapter {
             sql.disconnect();
         } catch (RuntimeException e) {
             sendAuthStatus(ctx, ProtocolDict.STATUS_ERROR);
-            return;
         }
     }
 
@@ -76,8 +97,24 @@ public class CloudServerHandler extends ChannelInboundHandlerAdapter {
             sendRegStatus(ctx, ProtocolDict.STATUS_OK);
         } catch (RuntimeException e) {
             sendRegStatus(ctx, ProtocolDict.STATUS_ERROR);
-            return;
         }
+    }
+
+    public void sendGetStructureError(ChannelHandlerContext ctx) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.GET_DIR_STRUCTURE_STATUS);
+        msg.writeShort(ProtocolDict.STATUS_ERROR);
+        writeMsg(ctx.channel(), msg);
+    }
+
+    public void sendGetStructureStatusAndInfo(ChannelHandlerContext ctx, ArrayList<FileDir> arr) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.GET_DIR_STRUCTURE_STATUS);
+        msg.writeShort(ProtocolDict.STATUS_OK);
+        for (FileDir f : arr) {
+            Protocol.putFileDir(msg, f);
+        }
+        writeMsg(ctx.channel(), msg);
     }
 
     public void sendRegStatus(ChannelHandlerContext ctx, short status) {

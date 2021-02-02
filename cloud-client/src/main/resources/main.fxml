@@ -43,10 +43,11 @@
     <TableView fx:id="filesTable" VBox.vgrow="ALWAYS" />
 
     <HBox spacing="5">
-        <Button focusTraversable="false" maxWidth="Infinity" text="Создать папку" HBox.hgrow="ALWAYS" />
-        <Button focusTraversable="false" maxWidth="Infinity" text="Загрузить файл" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Создать папку" HBox.hgrow="ALWAYS" onAction="#btnAddDirectory"/>
+        <Button focusTraversable="false" maxWidth="Infinity" text="Загрузить файл" HBox.hgrow="ALWAYS" onAction="#btnUploadFile"/>
         <Button focusTraversable="false" maxWidth="Infinity" text="Скачать файл" HBox.hgrow="ALWAYS" />
-        <Button focusTraversable="false" maxWidth="Infinity" text="Удалить" HBox.hgrow="ALWAYS" />
+        <Button focusTraversable="false" maxWidth="Infinity" text="Удалить" HBox.hgrow="ALWAYS" onAction="#btnDelete"/>
+        <Button focusTraversable="false" maxWidth="Infinity" text="Переименовать" HBox.hgrow="ALWAYS" onAction="#btnRename"/>
         <padding>
             <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
         </padding>

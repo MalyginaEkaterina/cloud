@@ -12,8 +12,8 @@
     <artifactId>cloud-client</artifactId>
 
     <properties>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.tagret>1.8</maven.compiler.tagret>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.tagret>8</maven.compiler.tagret>
     </properties>
 
     <dependencies>

@@ -22,7 +22,9 @@ public class FileDir {
         if (type == ProtocolDict.TYPE_DIRECTORY) {
             this.size = -1L;
         }
+        this.pathStr = String.join("/", path);
     }
+
     public FileDir(short type, long size, String[] path) {
         this(type, path);
         this.size = size;
@@ -34,9 +36,7 @@ public class FileDir {
     }
 
     public FileDir(short type, long id, long size, String pathStr) {
-        this.type = type;
-        this.id = id;
-        this.size = size;
+        this(type, id, size, pathStr.split("/"));
         this.pathStr = pathStr;
     }
 
@@ -62,6 +62,20 @@ public class FileDir {
 
     public String getPathStr() {
         return pathStr;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+        path[path.length - 1] = name;
+        if (pathStr.contains("/")) {
+            pathStr = pathStr.substring(0, pathStr.lastIndexOf("/") + 1) + name;
+        } else {
+            pathStr = name;
+        }
     }
 
     @Override

@@ -1,7 +1,4 @@
-import cloud.common.CloudMsgDecoder;
-import cloud.common.Protocol;
-import cloud.common.ProtocolDict;
-import cloud.common.User;
+import cloud.common.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -10,11 +7,18 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class CloudClient {
+    private static final Logger LOG = LoggerFactory.getLogger(CloudClient.class);
+
     private SocketChannel channel;
     private Callbacks callbacks;
 
@@ -22,7 +26,7 @@ public class CloudClient {
     private static final int PORT = 8189;
     private boolean isAuthorized;
 
-    //CloudMsgDecoder ожидает, пока придет bytebuf, содержащий все сообщение,
+    // CloudMsgDecoder ожидает, пока придет bytebuf, содержащий все сообщение,
     // считывает первые 4 байта из него(длина сообщения) и передает остальной bytebuf хендлеру
     public CloudClient() {
         isAuthorized = false;
@@ -44,12 +48,13 @@ public class CloudClient {
                 ChannelFuture future = b.connect(HOST, PORT).sync();
                 future.channel().closeFuture().sync();
             } catch (Exception e) {
-                e.printStackTrace();
+                LOG.error("e = ", e);
             } finally {
                 workerGroup.shutdownGracefully();
             }
         });
         t.start();
+        LOG.info("Client started");
     }
 
     //сообщение отправляется в формате:
@@ -62,6 +67,7 @@ public class CloudClient {
         Protocol.putString(msg, password);
         callbacks.setOnAuthStatusCallback(callback);
         writeMsg(msg);
+        LOG.info("Sent authorize for {}", login);
     }
 
     public void register(User user, Consumer<Short> callback) {
@@ -73,6 +79,7 @@ public class CloudClient {
         Protocol.putString(msg, user.getPass());
         callbacks.setOnRegStatusCallback(callback);
         writeMsg(msg);
+        LOG.info("Sent register for {}", user.getLogin());
     }
 
     public void getDirectoryStructure(BiConsumer<Short, TreeDirectory> callback) {
@@ -80,30 +87,83 @@ public class CloudClient {
         msg.writeShort(ProtocolDict.GET_DIR_STRUCTURE);
         callbacks.setOnDirStructureCallback(callback);
         writeMsg(msg);
+        LOG.info("Sent request for directory structure");
+    }
+
+    public void createNewDir(FileDir d, BiConsumer<Short, FileDir> callback) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.CREATE_NEW_DIRECTORY);
+        Protocol.putFileDir(msg, d);
+        callbacks.setOnCreateNewDirCallback(callback);
+        writeMsg(msg);
+        LOG.info("Sent request for creating new folder {}", d.getName());
+    }
+
+    public void startUploadFile(File file, FileDir newFile, BiConsumer<Short, FileDir> callback) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.START_UPLOAD_FILE);
+        Protocol.putFileDir(msg, newFile);
+        callbacks.setOnUploadFileCallback(callback);
+        callbacks.setOnStartUploadFileCallback((status, f) -> {
+            System.out.println(status);
+            if (status == ProtocolDict.STATUS_ERROR || status == ProtocolDict.STATUS_NOT_ENOUGH_MEM) {
+                callbacks.getOnUploadFileCallback().accept(status, f);
+            } else if (status == ProtocolDict.STATUS_OK) {
+                try {
+                    uploadFile(file, f);
+                } catch (RuntimeException e) {
+                    callbacks.getOnUploadFileCallback().accept(ProtocolDict.STATUS_ERROR, f);
+                    LOG.error("e = ", e);
+                }
+            }
+        });
+        writeMsg(msg);
+        LOG.info("Sent request for file upload start {}", newFile.getName());
+    }
+
+    public void uploadFile(File file, FileDir f) {
+        try (FileInputStream fileInputStream = new FileInputStream(file)) {
+            byte[] b = new byte[10 * 1024];
+            int i = 0;
+            while ((i = fileInputStream.read(b)) >= 0) {
+                ByteBuf msg = Unpooled.buffer();
+                msg.writeShort(ProtocolDict.UPLOAD_FILE);
+                msg.writeLong(f.getId());
+                msg.writeBytes(b, 0, i);
+                writeMsg(msg);
+            }
+            endUploadFile(f.getId());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void endUploadFile(long id) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.END_UPLOAD_FILE);
+        msg.writeLong(id);
+        callbacks.setOnEndUploadFileCallback((status, f) -> {
+            callbacks.getOnUploadFileCallback().accept(status, f);
+        });
+        writeMsg(msg);
+        LOG.info("Sent request for file upload end {}", id);
+    }
+
+    public void rename(FileDir fileDir, String newName, Consumer<Short> callback) {
+        ByteBuf msg = Unpooled.buffer();
+        msg.writeShort(ProtocolDict.RENAME);
+        Protocol.putString(msg, newName);
+        Protocol.putFileDir(msg, fileDir);
+        callbacks.setOnRenameStatusCallback(callback);
+        writeMsg(msg);
+        LOG.info("Sent rename request for {}, new_name={}",fileDir.getName(),newName);
     }
 
     public void writeMsg(ByteBuf msg) {
-        //добавляем длину всего сообщения перед сообщением(4 байта)
+        // добавляем длину всего сообщения перед сообщением(4 байта)
         ByteBuf msgLength = Unpooled.buffer(Integer.BYTES);
         msgLength.writeInt(msg.writerIndex());
         channel.write(msgLength);
         channel.writeAndFlush(msg);
     }
-
-//    public static void writeSmallFile(DataOutputStream out, File f) throws IOException {
-//        byte[] data;
-//        try {
-//            data = Files.readAllBytes(f.toPath());
-//        } catch (IOException e) {
-//            System.out.println("Exception caught when reading the file " + f.getName());
-//            System.out.println(e.getMessage());
-//            return;
-//        }
-//        out.writeShort(ProtocolDict.LOAD);
-//        byte[] name = f.getName().getBytes(StandardCharsets.UTF_8);
-//        out.writeInt(name.length);
-//        out.write(name);/
-//        out.writeInt(data.length);
-//        out.write(data);
-//    }
 }

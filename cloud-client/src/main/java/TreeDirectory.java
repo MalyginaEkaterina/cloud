@@ -12,7 +12,6 @@ public class TreeDirectory {
         this.root = new TreeNode(f);
     }
 
-
     public void insert(FileDir f) {
         String[] path = f.getPath();
         TreeNode parent = root;

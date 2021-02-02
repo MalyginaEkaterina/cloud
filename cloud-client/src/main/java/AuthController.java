@@ -55,28 +55,26 @@ public class AuthController {
             authFail.setVisible(true);
         } else {
             cloudClient.authorize(login.getText(), pass.getText(), (status, user) -> {
-                if (status == ProtocolDict.STATUS_LOGIN_FAIL) {
-                    Platform.runLater(() -> {
-                        login.clear();
-                        pass.clear();
-                        authFail.setText("Неверный логин/пароль");
-                        authFail.setVisible(true);
-                    });
-                } else if (status == ProtocolDict.STATUS_ERROR) {
-                    Platform.runLater(() -> {
+                Platform.runLater(() -> {
+                    if (status == ProtocolDict.STATUS_LOGIN_FAIL) {
+                        Platform.runLater(() -> {
+                            login.clear();
+                            pass.clear();
+                            authFail.setText("Неверный логин/пароль");
+                            authFail.setVisible(true);
+                        });
+                    } else if (status == ProtocolDict.STATUS_ERROR) {
                         authFail.setText("Ошибка, попробуйте позднее");
                         authFail.setVisible(true);
-                    });
-                } else if (status == ProtocolDict.STATUS_OK) {
-                    mainController.setUserInfo(user);
-                    mainController.init();
-                    Platform.runLater(() -> {
+                    } else if (status == ProtocolDict.STATUS_OK) {
+                        mainController.setUserInfo(user);
+                        mainController.init();
                         authFail.setVisible(false);
                         Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
                         stage.setTitle("Cloud storage");
                         stage.setScene(new Scene(mainRoot, 800, 600));
-                    });
-                }
+                    }
+                });
             });
         }
     }

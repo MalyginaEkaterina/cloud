@@ -45,20 +45,16 @@ public class RegistrationController {
             incorrectData.setVisible(true);
         } else {
             cloudClient.register(new User(name.getText(), email.getText(), login.getText(), pass.getText()), status -> {
-                if (status == ProtocolDict.STATUS_LOGIN_USED) {
-                    Platform.runLater(() -> {
+                Platform.runLater(() -> {
+                    if (status == ProtocolDict.STATUS_LOGIN_USED) {
                         login.clear();
                         incorrectData.setText("Данный логин уже используется. Попробуйте другой");
                         incorrectData.setVisible(true);
-                    });
-                } else if (status == ProtocolDict.STATUS_ERROR) {
-                    Platform.runLater(() -> {
+                    } else if (status == ProtocolDict.STATUS_ERROR) {
                         login.clear();
                         incorrectData.setText("Ошибка. Попробуйте позже");
                         incorrectData.setVisible(true);
-                    });
-                } else if (status == ProtocolDict.STATUS_OK) {
-                    Platform.runLater(() -> {
+                    } else if (status == ProtocolDict.STATUS_OK) {
                         incorrectData.setVisible(false);
                         Alert alert = new Alert(Alert.AlertType.INFORMATION);
                         alert.setTitle("Auth status");
@@ -68,8 +64,8 @@ public class RegistrationController {
                         Stage stage = (Stage) ((Node) actionEvent.getSource()).getScene().getWindow();
                         stage.setTitle("Auth");
                         stage.setScene(authScene);
-                    });
-                }
+                    }
+                });
             });
         }
     }

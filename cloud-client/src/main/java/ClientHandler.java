@@ -94,6 +94,31 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
                 } else {
                     LOG.error("unexpected message received, msgType={}", msgType);
                 }
+            } else if (msgType == ProtocolDict.DELETE_STATUS) {
+                short status = m.readShort();
+                long freeSize = m.readLong();
+                if (callbacks.getOnDeleteStatusCallback() != null) {
+                    callbacks.getOnDeleteStatusCallback().accept(status, freeSize);
+                } else {
+                    LOG.error("unexpected message received, msgType={}", msgType);
+                }
+            } else if (msgType == ProtocolDict.PROCESS_DOWNLOAD) {
+                long fid = m.readLong();
+                byte[] b = new byte[m.writerIndex() - m.readerIndex()];
+                m.readBytes(b);
+                if (callbacks.getOnProcDownloadStatusCallback() != null) {
+                    callbacks.getOnProcDownloadStatusCallback().accept(fid, b);
+                } else {
+                    LOG.error("unexpected message received, msgType={}", msgType);
+                }
+            } else if (msgType == ProtocolDict.END_DOWNLOAD) {
+                short status = m.readShort();
+                long fid = m.readLong();
+                if (callbacks.getOnEndDownloadStatusCallback() != null) {
+                    callbacks.getOnEndDownloadStatusCallback().accept(status, fid);
+                } else {
+                    LOG.error("unexpected message received, msgType={}", msgType);
+                }
             } else {
                 LOG.error("unknown message received msgType={}", msgType);
             }

@@ -58,7 +58,6 @@ public class AuthController {
                 Platform.runLater(() -> {
                     if (status == ProtocolDict.STATUS_LOGIN_FAIL) {
                         Platform.runLater(() -> {
-                            login.clear();
                             pass.clear();
                             authFail.setText("Неверный логин/пароль");
                             authFail.setVisible(true);

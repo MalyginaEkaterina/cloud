@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Optional;
@@ -30,6 +31,7 @@ public class MainController implements Initializable {
     private User userInfo;
     private TreeDirectory treeDirectory;
     private String currentPath;
+    private static final String CLOUD_DOWNLOADS = "cloudDownloads";
 
     @FXML
     public Label lName;
@@ -61,7 +63,7 @@ public class MainController implements Initializable {
         cloudClient.getDirectoryStructure((status, tree) -> {
             Platform.runLater(() -> {
                 if (status == ProtocolDict.STATUS_ERROR) {
-                    //TODO Отобразить сообщение об ошибке
+                    showAlertError("Не удалось получить структуру папок");
                 } else if (status == ProtocolDict.STATUS_OK) {
                     treeDirectory = tree;
                     updateTable();
@@ -129,7 +131,7 @@ public class MainController implements Initializable {
                 }
             };
         });
-        fileSizeColumn.setPrefWidth(120);
+        fileSizeColumn.setPrefWidth(140);
         fileSizeColumn.setStyle("-fx-alignment: CENTER-LEFT;");
 
 
@@ -175,25 +177,27 @@ public class MainController implements Initializable {
             if (!p.matcher(newValue).matches()) dialog.getEditor().setText(oldValue);
         });
 
-        dialog.showAndWait();
-        String dirName = dialog.getEditor().getText();
-        if (!dirName.isEmpty()) {
-            String dirPath = currentPath + dirName;
-            FileDir newDir = new FileDir(ProtocolDict.TYPE_DIRECTORY, -1L, -1L, dirPath);
-            cloudClient.createNewDir(newDir, (status, d) -> {
-                Platform.runLater(() -> {
-                    if (status == ProtocolDict.STATUS_ERROR) {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Error alert");
-                        alert.setHeaderText("Не получилось создать папку");
-                        alert.setContentText("Error");
-                        alert.showAndWait();
-                    } else if (status == ProtocolDict.STATUS_OK) {
-                        treeDirectory.insert(d);
-                        updateTable();
-                    }
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            String dirName = result.get();
+            if (treeDirectory.get(currentPath).getSetChild().containsKey(dirName)) {
+                showAlertError("папка с таким именем уже существует");
+                return;
+            }
+            if (!dirName.isEmpty()) {
+                String dirPath = currentPath + dirName;
+                FileDir newDir = new FileDir(ProtocolDict.TYPE_DIRECTORY, -1L, -1L, dirPath);
+                cloudClient.createNewDir(newDir, (status, d) -> {
+                    Platform.runLater(() -> {
+                        if (status == ProtocolDict.STATUS_ERROR) {
+                            showAlertError("Не получилось создать папку");
+                        } else if (status == ProtocolDict.STATUS_OK) {
+                            treeDirectory.insert(d);
+                            updateTable();
+                        }
+                    });
                 });
-            });
+            }
         }
     }
 
@@ -202,21 +206,17 @@ public class MainController implements Initializable {
         fileChooser.setTitle("Upload file");
         File selectedFile = fileChooser.showOpenDialog(((Node) actionEvent.getSource()).getScene().getWindow());
         if (selectedFile != null) {
+            if (treeDirectory.get(currentPath).getSetChild().containsKey(selectedFile.getName())) {
+                showAlertError("файл с таким именем уже существует");
+                return;
+            }
             FileDir newFile = new FileDir(ProtocolDict.TYPE_FILE, 1L, selectedFile.length(), currentPath + selectedFile.getName());
             cloudClient.startUploadFile(selectedFile, newFile, (status, f) -> {
                 Platform.runLater(() -> {
                     if (status == ProtocolDict.STATUS_ERROR) {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Error alert");
-                        alert.setHeaderText("Не получилось загрузить файл " + selectedFile.getName());
-                        alert.setContentText("Error");
-                        alert.showAndWait();
+                        showAlertError("Не получилось загрузить файл " + selectedFile.getName());
                     } else if (status == ProtocolDict.STATUS_NOT_ENOUGH_MEM) {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Error alert");
-                        alert.setHeaderText("Недостаточно места для загрузки файла " + selectedFile.getName());
-                        alert.setContentText("Error");
-                        alert.showAndWait();
+                        showAlertError("Недостаточно места для загрузки файла " + selectedFile.getName());
                     } else if (status == ProtocolDict.STATUS_OK) {
                         Alert alert = new Alert(Alert.AlertType.INFORMATION);
                         alert.setTitle("File uploaded");
@@ -233,8 +233,59 @@ public class MainController implements Initializable {
         }
     }
 
+    public void btnDownloadFile(ActionEvent actionEvent) {
+        if (!filesTable.isFocused()) {
+            return;
+        }
+        if (filesTable.getSelectionModel().isEmpty()) {
+            return;
+        }
+        FileDir selectedFile = filesTable.getSelectionModel().getSelectedItem().getFileDir();
+        if (selectedFile.getType() == ProtocolDict.TYPE_DIRECTORY) {
+            return;
+        }
+        File downloadsDir = new File(CLOUD_DOWNLOADS);
+        downloadsDir.mkdirs();
+        File file = new File(downloadsDir, selectedFile.getName());
+        if (file.exists()) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Download File");
+            alert.setHeaderText("Файл " + selectedFile.getName() + " уже загружен. Перазаписать?");
+            alert.setContentText(null);
+            Optional<ButtonType> option = alert.showAndWait();
+            if (option.get() == ButtonType.CANCEL) {
+                return;
+            } else if (option.get() == ButtonType.OK) {
+                file.delete();
+            }
+        }
+        LOG.info("download file " + selectedFile.getName());
+        try {
+            cloudClient.downloadFile(file, selectedFile, (status, fname) -> {
+                Platform.runLater(() -> {
+                    if (status == ProtocolDict.STATUS_OK) {
+                        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                        alert.setTitle("File downloaded");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Скачивание файла " + fname + " завершено");
+                        alert.showAndWait();
+                    } else {
+                        showAlertError("Не получилось скачать файл " + fname);
+                    }
+                });
+            });
+        } catch (FileNotFoundException e) {
+            file.delete();
+            showAlertError("Не получилось скачать файл " + selectedFile.getName());
+            LOG.error("e = ", e);
+        }
+    }
+
     public void btnDelete(ActionEvent actionEvent) {
         if (!filesTable.isFocused()) {
+            return;
+        }
+        if (filesTable.getSelectionModel().isEmpty()) {
             return;
         }
         FileDir selectedFileDir = filesTable.getSelectionModel().getSelectedItem().getFileDir();
@@ -246,13 +297,38 @@ public class MainController implements Initializable {
 
         if (option.get() == ButtonType.OK) {
             LOG.info("delete file/directory {}", selectedFileDir.getName());
+            TreeNode selectedNode = treeDirectory.get(selectedFileDir.getPathStr());
+            int emptyFlag = (selectedNode.getParent().getSetChild().size() == 1) ? 1 : 0;
+            cloudClient.delete(selectedFileDir, emptyFlag, (status, freeSize) -> {
+                Platform.runLater(() -> {
+                    if (status == ProtocolDict.STATUS_OK) {
+                        treeDirectory.delete(selectedFileDir);
+                        updateTable();
+                        userInfo.setFreeMemSize(freeSize);
+                        updateViewSize();
+                    } else {
+                        showAlertError("Не получилось удалить " + selectedFileDir.getName());
+                    }
+                });
+            });
         } else if (option.get() == ButtonType.CANCEL) {
             LOG.info("delete file/directory {} cancelled", selectedFileDir.getName());
         }
     }
 
+    public void showAlertError(String text) {
+        Alert alertError = new Alert(Alert.AlertType.ERROR);
+        alertError.setTitle("Error alert");
+        alertError.setHeaderText(text);
+        alertError.setContentText("Error");
+        alertError.showAndWait();
+    }
+
     public void btnRename(ActionEvent actionEvent) {
         if (!filesTable.isFocused()) {
+            return;
+        }
+        if (filesTable.getSelectionModel().isEmpty()) {
             return;
         }
         FileDir selectedFileDir = filesTable.getSelectionModel().getSelectedItem().getFileDir();
@@ -268,28 +344,25 @@ public class MainController implements Initializable {
             if (!p.matcher(newValue).matches()) dialog.getEditor().setText(oldValue);
         });
 
-        dialog.showAndWait();
-        String newDirName = dialog.getEditor().getText();
-        if (!newDirName.isEmpty()) {
-            LOG.info("rename file/directory {}, new name {}", selectedFileDir.getName(), newDirName);
-            cloudClient.rename(selectedFileDir, newDirName, status -> {
-                Platform.runLater(() -> {
-                    if (status == ProtocolDict.STATUS_OK) {
-                        if (selectedFileDir.getType() == ProtocolDict.TYPE_FILE) {
-                            selectedFileDir.setName(newDirName);
-                            updateTable();
-                        } else {
+        Optional<String> result = dialog.showAndWait();
+        if (result.isPresent()) {
+            String newDirName = result.get();
+            if (treeDirectory.get(currentPath).getSetChild().containsKey(newDirName)) {
+                showAlertError("файл/папка с таким именем уже существует");
+                return;
+            }
+            if (!newDirName.isEmpty()) {
+                LOG.info("rename file/directory {}, new name {}", selectedFileDir.getName(), newDirName);
+                cloudClient.rename(selectedFileDir, newDirName, status -> {
+                    Platform.runLater(() -> {
+                        if (status == ProtocolDict.STATUS_OK) {
                             getDirStruct();
+                        } else {
+                            showAlertError("Не получилось переименовать файл/директорию");
                         }
-                    } else {
-                        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        alert.setTitle("Error alert");
-                        alert.setHeaderText("Не получилось переименовать файл/директорию");
-                        alert.setContentText("Error");
-                        alert.showAndWait();
-                    }
+                    });
                 });
-            });
+            }
         }
     }
 }

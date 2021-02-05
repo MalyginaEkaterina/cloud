@@ -7,4 +7,5 @@ public class Configs {
     protected static String dbPass = "123456";
     protected static String dbName = "cloud_storage";
     protected static String dbParam = "serverTimezone=Europe/Moscow&useSSL=false";
+    protected static int dbMaxCountConnect = 5;
 }

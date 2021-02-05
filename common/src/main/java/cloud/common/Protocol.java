@@ -12,12 +12,13 @@ public class Protocol {
     }
     public static String readString(ByteBuf in) {
         int len = in.readInt();
-        return in.readBytes(len).toString(StandardCharsets.UTF_8);
+        ByteBuf b = in.readBytes(len);
+        try {
+            return b.toString(StandardCharsets.UTF_8);
+        } finally {
+            b.release();
+        }
     }
-
-//    public static FileDir readFileDir(ByteBuf in) {
-//        return new FileDir(in.readShort(), in.readLong(), in.readLong(), readString(in).split("/"));
-//    }
 
     public static FileDir readFileDirStr(ByteBuf in) {
         return new FileDir(in.readShort(), in.readLong(), in.readLong(), readString(in));

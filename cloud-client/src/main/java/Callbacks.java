@@ -13,6 +13,10 @@ class Callbacks {
     private BiConsumer<Short, FileDir> onStartUploadFileCallback;
     private BiConsumer<Short, FileDir> onEndUploadFileCallback;
     private Consumer<Short> onRenameStatusCallback;
+    private BiConsumer<Short, Long> onDeleteStatusCallback;
+    private BiConsumer<Short, String> onDownloadStatusCallback;
+    private BiConsumer<Long, byte[]> onProcDownloadStatusCallback;
+    private BiConsumer<Short, Long> onEndDownloadStatusCallback;
 
     Consumer<Short> getOnRegStatusCallback() {
         return onRegStatusCallback;
@@ -76,5 +80,37 @@ class Callbacks {
 
     public void setOnRenameStatusCallback(Consumer<Short> onRenameStatusCallback) {
         this.onRenameStatusCallback = onRenameStatusCallback;
+    }
+
+    public BiConsumer<Short, Long> getOnDeleteStatusCallback() {
+        return onDeleteStatusCallback;
+    }
+
+    public void setOnDeleteStatusCallback(BiConsumer<Short, Long> onDeleteStatusCallback) {
+        this.onDeleteStatusCallback = onDeleteStatusCallback;
+    }
+
+    public BiConsumer<Short, String> getOnDownloadStatusCallback() {
+        return onDownloadStatusCallback;
+    }
+
+    public void setOnDownloadStatusCallback(BiConsumer<Short, String> onDownloadStatusCallback) {
+        this.onDownloadStatusCallback = onDownloadStatusCallback;
+    }
+
+    public BiConsumer<Long, byte[]> getOnProcDownloadStatusCallback() {
+        return onProcDownloadStatusCallback;
+    }
+
+    public void setOnProcDownloadStatusCallback(BiConsumer<Long, byte[]> onProcDownloadStatusCallback) {
+        this.onProcDownloadStatusCallback = onProcDownloadStatusCallback;
+    }
+
+    public BiConsumer<Short, Long> getOnEndDownloadStatusCallback() {
+        return onEndDownloadStatusCallback;
+    }
+
+    public void setOnEndDownloadStatusCallback(BiConsumer<Short, Long> onEndDownloadStatusCallback) {
+        this.onEndDownloadStatusCallback = onEndDownloadStatusCallback;
     }
 }

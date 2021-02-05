@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -35,7 +36,10 @@ public class Main extends Application {
         //отображаем окно авторизации
         primaryStage.setTitle("Auth");
         primaryStage.setScene(authScene);
-        primaryStage.setOnCloseRequest(e -> System.exit(0));
+        primaryStage.setOnCloseRequest(event -> {
+            cloudClient.close();
+            Platform.exit();
+        });
         primaryStage.show();
     }
 

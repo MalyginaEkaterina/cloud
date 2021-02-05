@@ -63,6 +63,11 @@ public class TreeDirectory {
         return cur;
     }
 
+    public void delete(FileDir fileDir) {
+        TreeNode treeNode = get(fileDir.getPathStr());
+        treeNode.getParent().getSetChild().remove(fileDir.getName());
+    }
+
 //    public static void main(String[] args) {
 //        TreeDirectory t = new TreeDirectory();
 //        //System.out.println(Arrays.toString("ftft/".split("/")));

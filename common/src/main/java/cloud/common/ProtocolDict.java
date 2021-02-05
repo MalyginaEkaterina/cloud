@@ -16,6 +16,11 @@ public class ProtocolDict {
     public static final short END_UPLOAD_FILE_STATUS = 13;
     public static final short RENAME = 14;
     public static final short RENAME_STATUS = 15;
+    public static final short DELETE = 16;
+    public static final short DELETE_STATUS = 17;
+    public static final short DOWNLOAD = 18;
+    public static final short PROCESS_DOWNLOAD = 19;
+    public static final short END_DOWNLOAD = 20;
     public static final short STATUS_OK = 0;
     public static final short STATUS_ERROR = 1;
     public static final short STATUS_LOGIN_USED = 2;
